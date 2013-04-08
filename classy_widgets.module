@@ -53,6 +53,10 @@ function classy_widgets_field_widget_settings_form($field, $instance) {
  * and impart it to the field wrapper
  */
 function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
+  if( !isset($form_state['field'])) {
+    // this did not happen in my testing, so I am unsure what it should look like
+    return;  // get out of here before it crashes
+  }
   
   foreach( $form_state['field'] as $field => $has ) {   
     if( isset( $has['und']['field']['settings']['classy'])) {     
