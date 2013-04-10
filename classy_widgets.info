@@ -2,5 +2,5 @@ name = Classy Widgets
 description = "Add custom css classes to fields and widgets in the node add/edit form."
 core = 7.x
 version = "7.x-0.9-dev"
-
+package = Custom
 dependencies[] = field

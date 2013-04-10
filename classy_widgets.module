@@ -8,10 +8,9 @@
 function classy_widgets_form_field_ui_field_edit_form_alter(&$form, $form_state) {
   
   $field = $form['#field'];
-  $instance = field_info_instance($form['instance']['entity_type']['#value'], 
-      $form['instance']['field_name']['#value'], 
-      $form['instance']['bundle']['#value']);
-  // should be (node, field_first_name, contact)
+  $instance = field_info_instance($form['instance']['entity_type']['#value'], $form['instance']['field_name']['#value'], $form['instance']['bundle']['#value']);
+  // values should be should be (node, field_first_name, contact) from my testing
+  
   $form['field']['settings'] += classy_widgets_field_widget_settings_form($field, $instance);
   
 }
@@ -30,7 +29,6 @@ function classy_widgets_field_widget_info_alter(&$info) {
 
 /*
  * define the piece of form to add to the field settings page
- * shows, but not saving yet?
  */
 function classy_widgets_field_widget_settings_form($field, $instance) {
 //  $widget = $instance['widget'];
