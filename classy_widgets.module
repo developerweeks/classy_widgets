@@ -1,5 +1,9 @@
 <?php
-/*  This module made by DeveloperWeeks, April 2013, still experimental  */
+/*
+ * This module made by DeveloperWeeks, April 2013, still experimental  
+ * Copyright 2013 Michael Weeks
+ * open source code under the GNU Public License
+ */
 
 
 /**
