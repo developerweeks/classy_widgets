@@ -1,0 +1,98 @@
+<?php
+/*
+ * This module made by DeveloperWeeks, April 2013, still experimental  
+ * Copyright 2013 Michael Weeks
+ * open source code under the GNU Public License
+ */
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function classy_widgets_form_field_ui_field_edit_form_alter(&$form, $form_state) {
+  
+  $field = $form['#field'];
+  $instance = field_info_instance($form['instance']['entity_type']['#value'], $form['instance']['field_name']['#value'], $form['instance']['bundle']['#value']);
+  // values should be should be (node, field_first_name, contact) from my testing
+  
+  $form['field']['settings'] += classy_widgets_field_widget_settings_form($field, $instance);
+  
+}
+
+/**
+ * Implements hook_field_widget_info_alter().
+ */
+function classy_widgets_field_widget_info_alter(&$info) {
+  
+  foreach ($info as $field => $holds) {    
+    if (isset($info[$field]['settings'])) {
+      $info[$field]['settings'] += array( 'classy' => array(),  );
+    }
+  }
+}  // no return, pass-by-reference
+
+/*
+ * define the piece of form to add to the field settings page
+ */
+function classy_widgets_field_widget_settings_form($field, $instance) {
+//  $widget = $instance['widget'];
+  $settings = $field['settings'];
+  $form = array();
+  
+  $form['classy'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Add these classes to this field on the form'),
+    '#description' => t('Separate more than one class with commas'),
+    '#default_value' => (isset($settings['classy']))?$settings['classy']:'',
+  );
+  
+  return $form;
+}
+
+
+/*
+ * implements hook_form_alter, to check every field for classy-ness
+ * and impart it to the field wrapper
+ */
+function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
+  if( !isset($form_state['field'])) {
+    // this did not happen in my testing, so I am unsure what it should look like
+    return;  // get out of here before it crashes
+  }
+  
+  foreach( $form_state['field'] as $field => $has ) {   
+    if( isset( $has['und']['field']['settings']['classy'])) {     
+      $classes = explode(',', check_plain( $has['und']['field']['settings']['classy']) );
+      foreach ($classes as $add) {
+        $form[$field]['#attributes']['class'][] = $add;
+        // places it at the same level as field-type-text
+      }     
+    }
+  }
+  // this map built from explaining one site's form, might not be universal
+}
+
+
+
+/*
+ * helper function, because reassempling value paths from dpm is slightly irksome
+ */
+function explain($element = array(), $depth = 1, $lead = '' ) {
+  $string = '';
+  $cap = ' <br>';  // might be <br> or \n or a unique character for serialization
+  if($depth < 1) {
+    return '';
+  }
+  if( is_array($element)){
+    foreach($element as $key => $part){
+      $string .= ($depth == 1)?'['.$key.']':explain($part, $depth-1, $lead.'['.$key.']');
+    }
+  } elseif ( is_object($element)) {
+    foreach($element as $key => $part){
+      $string .= ($depth == 1)?'->'.$key:explain($part, $depth-1, $lead.'->'.$key);
+    }
+  } else {
+    $string .= $lead .' = '.$element .$cap;  
+  }
+  return $string;
+}
