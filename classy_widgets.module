@@ -46,6 +46,12 @@ function classy_widgets_field_widget_settings_form($field, $instance) {
     '#default_value' => (isset($settings['classy']))?$settings['classy']:'',
   );
   
+  /*TODO:
+  if this is a textfield field
+  add a checkbox for psuedo-select
+  add a textarea for the psuedo-options
+  */
+  
   return $form;
 }
 
@@ -68,10 +74,16 @@ function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
         // places it at the same level as field-type-text
       }     
     }
+    /*TODO:
+    if the psuedo-select is set
+    // Replace the textfield with radios to avoid uneditable lists
+    $form['field_contact_why'][$lang][0]['value']['#type'] = 'radios';
+    $form['field_contact_why'][$lang][0]['value']['#options'] = array(
+      'comments' => 'Comments', );
+    */
   }
   // this map built from explaining one site's form, might not be universal
 }
-
 
 
 /*
