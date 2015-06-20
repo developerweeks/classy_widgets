@@ -10,7 +10,6 @@ Installation:
 4. Enter a comma separated list of css classes in the 'Add These Classes...' field 
 5. Enter some css styling for those classes in your style sheets
 6. Marvel at how you did not have to write a list of 18 field ids into your theme styles to cherry-pick which ones get which style
-7. Enter the drupal irc and type: developerweeks++     ( for great karma! )
 
 Intented Use:
   My company is building several sites with field-intensive, user-facing content forms.  These forms are often required to stylistically match an arbitrary standard.  Finding the right combinations of fieldsets and descriptors for css was taking too much time.
