@@ -24,7 +24,6 @@ function classy_widgets_form_field_ui_field_edit_form_alter(&$form, $form_state)
  * make a space in the serialized field data to store my pieces
  */
 function classy_widgets_field_widget_info_alter(&$info) {
-  
   foreach ($info as $field => $holds) {    
     if (isset($info[$field]['settings'])) {
       // works best when same array keys as fields
@@ -62,24 +61,17 @@ function classy_widgets_field_widget_settings_form($field, $instance) {
   );
   
   if ($widget['type'] == 'text_textfield') {
-    // add controls for psuedo-select, and the options list
+    // add a checkbox for psuedo-select, and the options list
     $form['classy']['psuedo-select'] = array(
-      '#type' => 'radios',
-      '#title' => t('Hide this field behind limited options'),
-      '#options' => array (
-        'radios' => t('Radio buttons'),
-        'checkboxes' => t('Checkboxes'),
-        'select' => t('Dropdown select'),
-      ),
-    '#default_value' => (isset($settings['classy']['psuedo-select']))?$settings['classy']['psuedo-select']:'',
+      '#type' => 'checkbox',
+      '#title' => t('Convert this field to radio buttons on the form'),      
+      '#default_value' => (isset($settings['classy']['psuedo-select']))?$settings['classy']['psuedo-select']:'',
     );
-    // kinda crazy, very gimmicky, but could use ajax to change this fieldtype to the value selected
-
     $form['classy']['psuedo-options'] = array(
       '#type' => 'textfield',
       '#title' => t('Options to present for selection'),
-      '#description' => t('In the form: key|long label,key|label, please'),
-      '#default_value' => (isset($settings['classy']['psuedo-options']))?$settings['classy']['psuedo-options']:'',
+      '#description' => t('In the form key|label,key|label please'),
+      '#default_value' => (isset($settings['psuedo-options']))?$settings['psuedo-options']:'',
     );
   }
   
@@ -123,13 +115,8 @@ krumo( $form );
 
     if( isset( $has[$lang]['field']['settings']['classy']['psuedo-select'])) {
       // a psuedo-select effect is requested on this field, apply it
-      $form[$field][$lang][0]['value']['#type'] = $has[$lang]['field']['settings']['classy']['psuedo-select'];
-krumo( $form[$field]);
-
-// Select lists requires a little more tweaking
-if($has[$lang]['field']['settings']['classy']['psuedo-select'] == 'select' ) {
-  
-}
+      //$form[$field][$lang][0]['value']['#type'] = $has[$lang]['field']['settings']['classy']['psuedo-select'];
+      $form[$field][$lang][0]['value']['#type'] = 'radios';
 
       // key|label,key|label with spaces allowed
       // so pull out the words between , and | for keys, and between | and , for labels
@@ -150,19 +137,22 @@ if($has[$lang]['field']['settings']['classy']['psuedo-select'] == 'select' ) {
  */
 function explain($element = array(), $depth = 1, $lead = '', $cap = ' <br>' ) {
   $string = '';
-  if($depth < 1) {
+  $cap = empty($cap)?' <br>':$cap;  // might be <br> or \n or a unique character for serialization
+  if ($depth < 1) {
     return '';
   }
-  if( is_array($element)){
-    foreach($element as $key => $part){
-      $string .= ($depth == 1)?'['.$key.']':explain($part, $depth-1, $lead.'['.$key.']');
+  if (is_array($element)) {
+    foreach ($element as $key => $part) {
+      $string .= ($depth == 1) ? '[' . $key . ']' : explain($part, $depth - 1, $lead . '[' . $key . ']', $cap);
     }
-  } elseif ( is_object($element)) {
-    foreach($element as $key => $part){
-      $string .= ($depth == 1)?'->'.$key:explain($part, $depth-1, $lead.'->'.$key);
+  }
+  elseif (is_object($element)) {
+    foreach ($element as $key => $part) {
+      $string .= ($depth == 1) ? '->' . $key : explain($part, $depth - 1, $lead . '->' . $key, $cap);
     }
-  } else {
-    $string .= $lead .' = '.$element .$cap;  
+  }
+  else {
+    $string .= $lead . ' = ' . $element . $cap;
   }
   return $string;
 }
