@@ -71,7 +71,7 @@ function classy_widgets_field_widget_settings_form($field, $instance) {
       '#type' => 'textfield',
       '#title' => t('Options to present for selection'),
       '#description' => t('In the form key|label,key|label please'),
-      '#default_value' => (isset($settings['psuedo-options']))?$settings['psuedo-options']:'',
+      '#default_value' => (isset($settings['classy']['psuedo-options']))?$settings['classy']['psuedo-options']:'',
     );
   }
   
@@ -89,7 +89,7 @@ function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
     return;  // get out of here before it crashes
   }
 
-  if( !$form['#node_edit_form'] ) {
+  if( !isset($form['#node_edit_form']) || !$form['#node_edit_form'] ) {
     // currently only want this touching Add and Edit forms
     return;
   }
@@ -97,11 +97,6 @@ function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
   // be language ambivalent
   $lang = $form['language']['#value'];
 
-krumo( $form );
-//$form[instance][default_value_widget][field_classy_test][#language]
-// my test site is using 'en' but form is using 'und'
-// the psuedo-select is showing on field_settings form
- 
   foreach( $form_state['field'] as $field => $has ) {   
 
     if( isset( $has[$lang]['field']['settings']['classy']['classes'])) { 
@@ -113,7 +108,7 @@ krumo( $form );
       }     
     }
 
-    if( isset( $has[$lang]['field']['settings']['classy']['psuedo-select'])) {
+    if( (NULL !== $has[$lang]['field']['settings']['classy']['psuedo-select']) && $has[$lang]['field']['settings']['classy']['psuedo-select']) {
       // a psuedo-select effect is requested on this field, apply it
       //$form[$field][$lang][0]['value']['#type'] = $has[$lang]['field']['settings']['classy']['psuedo-select'];
       $form[$field][$lang][0]['value']['#type'] = 'radios';
