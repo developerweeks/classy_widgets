@@ -1,19 +1,19 @@
 <?php
 /*
- * This module made by DeveloperWeeks, April 2013, still experimental  
+ * This module made by DeveloperWeeks, still experimental  
  * Copyright 2013 Michael Weeks
  * open source code under the GNU Public License
  */
 
 
 /**
- * Implements hook_form_alter().
+ * Implements hook_form_ID_alter().
  */
 function classy_widgets_form_field_ui_field_edit_form_alter(&$form, $form_state) {
   
   $field = $form['#field'];
   $instance = field_info_instance($form['instance']['entity_type']['#value'], $form['instance']['field_name']['#value'], $form['instance']['bundle']['#value']);
-  // values should be should be (node, field_first_name, contact) from my testing
+  // values should be should be (node, field_instance_name, content_type) from my testing
   
   $form['field']['settings'] += classy_widgets_field_widget_settings_form($field, $instance);
   
@@ -21,12 +21,20 @@ function classy_widgets_form_field_ui_field_edit_form_alter(&$form, $form_state)
 
 /**
  * Implements hook_field_widget_info_alter().
+ * make a space in the serialized field data to store my pieces
  */
 function classy_widgets_field_widget_info_alter(&$info) {
   
   foreach ($info as $field => $holds) {    
     if (isset($info[$field]['settings'])) {
-      $info[$field]['settings'] += array( 'classy' => array(),  );
+      // works best when same array keys as fields
+      $info[$field]['settings'] += array( 
+        'classy' => array(
+          'classes' => array(),
+          'psuedo-select' => array(),
+          'psuedo-options' => array(),
+        ),
+      );
     }
   }
 }  // no return, pass-by-reference
@@ -35,24 +43,37 @@ function classy_widgets_field_widget_info_alter(&$info) {
  * define the piece of form to add to the field settings page
  */
 function classy_widgets_field_widget_settings_form($field, $instance) {
-//  $widget = $instance['widget'];
+  $widget = $instance['widget'];
   $settings = $field['settings'];
   $form = array();
   
   $form['classy'] = array(
+    '#type' => 'fieldset', 
+    '#title' => t('Classy Widget settings'), 
+    '#weight' => 5, 
+    '#collapsible' => TRUE, 
+    '#collapsed' => FALSE,
+  );
+  $form['classy']['classes'] = array(
     '#type' => 'textfield',
     '#title' => t('Add these classes to this field on the form'),
     '#description' => t('Separate more than one class with commas'),
-    '#default_value' => (isset($settings['classy']))?$settings['classy']:'',
+    '#default_value' => (isset($settings['classy']['classes']))?$settings['classy']['classes']:'',
   );
   
   if ($widget['type'] == 'text_textfield') {
     // add a checkbox for psuedo-select, and the options list
-    $form['psuedo-select'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Convert this field to radio buttons on the form'),      
+    $form['classy']['psuedo-select'] = array(
+      '#type' => 'radios',
+      '#title' => t('This field should mimic a list on the form'),      
+      '#default_value' => (isset($settings['classy']['psuedo-select']))?$settings['classy']['psuedo-select']:'',
+      '#options' => array(
+        'radios' => 'Radio buttons',
+        'checkboxes' => 'Checkboxes',
+        'select' => 'Dropdown select',
+      ),
     );
-    $form['psuedo-options'] = array(
+    $form['classy']['psuedo-options'] = array(
       '#type' => 'textfield',
       '#title' => t('Options to present for selection'),
       '#description' => t('In the form key|label,key|label please'),
@@ -73,19 +94,41 @@ function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
     // this did not happen in my testing, so I am unsure what it should look like
     return;  // get out of here before it crashes
   }
-  
+
+  if( !$form['#node_edit_form'] ) {
+    // currently only want this touching Add and Edit forms
+    return;
+  }
+ 
+  // be language ambivalent
+  $lang = $form['language']['#value'];
+
+krumo( $form );
+//$form[instance][default_value_widget][field_classy_test][#language]
+ 
   foreach( $form_state['field'] as $field => $has ) {   
-    if( isset( $has['und']['field']['settings']['classy'])) {     
-      $classes = explode(',', check_plain( $has['und']['field']['settings']['classy']) );
+    if( isset( $has[$lang]['field']['settings']['classy'])) {     
+      // this field has classy classes to apply 
+      $classes = explode(',', check_plain( $has[$lang]['field']['settings']['classy']) );
       foreach ($classes as $add) {
         $form[$field]['#attributes']['class'][] = $add;
         // places it at the same level as field-type-text
       }     
     }
-    if( isset( $has[$lang]['field']['settings']['psuedo-select'])) {
-      $form[$field][$lang][0]['value']['#type'] = 'radios';
-      preg_match_all("/([^,|]+)|([^,|]+)/", $has[$lang]['field']['settings']['psuedo-options'], $r);
-      $form[$field][$lang][0]['value']['#options'] = $r;
+
+    if( isset( $has[$lang]['field']['settings']['classy']['psuedo-select']) && $has[$lang]['field']['settings']['classy']['psuedo-select']) {
+      // a psuedo-select effect is requested on this field, apply it
+      $form[$field][$lang][0]['value']['#type'] = $has[$lang]['field']['settings']['classy']['psuedo-select'];
+      //$form[$field][$lang][0]['value']['#type'] = 'radios';
+
+      // key|label,key|label with spaces allowed
+      // so pull out the words between , and | for keys, and between | and , for labels
+      preg_match_all("/,?([A-z ]+)\|/", $has[$lang]['field']['settings']['classy']['psuedo-options'], $aKey);
+      preg_match_all("/\|([A-z ]+),?/", $has[$lang]['field']['settings']['classy']['psuedo-options'], $aLabel);
+
+      // set the options from the settings
+      $form[$field][$lang][0]['value']['#options'] = array_combine($aKey[1], $aLabel[1]);
+      $form[$field][$lang][0]['value']['#multiple'] = FALSE;
     }
   }
   // this map built from explaining one site's form, might not be universal
@@ -95,22 +138,24 @@ function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
 /*
  * helper function, because reassempling value paths from dpm is slightly irksome
  */
-function explain($element = array(), $depth = 1, $lead = '' ) {
+function explain($element = array(), $depth = 1, $lead = '', $cap = ' <br>' ) {
   $string = '';
-  $cap = ' <br>';  // might be <br> or \n or a unique character for serialization
-  if($depth < 1) {
+  $cap = empty($cap)?' <br>':$cap;  // might be <br> or \n or a unique character for serialization
+  if ($depth < 1) {
     return '';
   }
-  if( is_array($element)){
-    foreach($element as $key => $part){
-      $string .= ($depth == 1)?'['.$key.']':explain($part, $depth-1, $lead.'['.$key.']');
+  if (is_array($element)) {
+    foreach ($element as $key => $part) {
+      $string .= ($depth == 1) ? '[' . $key . ']' : explain($part, $depth - 1, $lead . '[' . $key . ']', $cap);
     }
-  } elseif ( is_object($element)) {
-    foreach($element as $key => $part){
-      $string .= ($depth == 1)?'->'.$key:explain($part, $depth-1, $lead.'->'.$key);
+  }
+  elseif (is_object($element)) {
+    foreach ($element as $key => $part) {
+      $string .= ($depth == 1) ? '->' . $key : explain($part, $depth - 1, $lead . '->' . $key, $cap);
     }
-  } else {
-    $string .= $lead .' = '.$element .$cap;  
+  }
+  else {
+    $string .= $lead . ' = ' . $element . $cap;
   }
   return $string;
 }
