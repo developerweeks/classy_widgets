@@ -105,7 +105,6 @@ function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
 
 //krumo( $form );
 //$form[instance][default_value_widget][field_classy_test][#language]
-krumo(array_diff_assoc( $form[$field][$lang][0]['value'] , $form['field_select_example'][$lang]));
 
   foreach( $form_state['field'] as $field => $has ) {   
     if( isset( $has[$lang]['field']['settings']['classy'])) {     
@@ -127,22 +126,62 @@ krumo(array_diff_assoc( $form[$field][$lang][0]['value'] , $form['field_select_e
       preg_match_all("/,?([A-z ]+)\|/", $has[$lang]['field']['settings']['classy']['psuedo-options'], $aKey);
       preg_match_all("/\|([A-z ]+),?/", $has[$lang]['field']['settings']['classy']['psuedo-options'], $aLabel);
 
-if($field == "field_classy_test"){
-  $form[$field][$lang][0]['value'] = $form['field_select_example'][$lang];
-  $form[$field][$lang][0]['value']['#options'] = array_combine($aKey[1], $aLabel[1]);
-}
+      if($form[$field][$lang][0]['value']['#type'] == 'select'){
+        classy_widgets_select_conversion($form[$field][$lang], array_combine($aKey[1], $aLabel[1]) );
+      } else {
+        // just set the values
+        $form[$field][$lang][0]['value']['#options'] = array_combine($aKey[1], $aLabel[1]);
+      }
       // set the options from the settings
       //$form[$field][$lang][0]['#options'] = array_combine($aKey[1], $aLabel[1]);
       //$form[$field][$lang][0]['#multiple'] = FALSE;
       //$form[$field][$lang][0]['#delta'] = 0;
-      //$form[$field][$lang][0]['value']['#options'] = array_combine($aKey[1], $aLabel[1]);
-      //$form[$field][$lang][0]['value']['#multiple'] = FALSE;
-      //$form[$field][$lang][0]['value']['#delta'] = 0;
     }
   }
+/*
+foreach ( $form['field_select_example'][$lang] as $key => $stuff){
+  //if( NULL == $form['field_classy_test'][$lang][0]['value'][$key] || $form['field_classy_test'][$lang][0]['value'][$key] !== $stuff){
+  if( NULL == $form['field_classy_test'][$lang][0]['value'][$key] ){
+    // either select has this and text does not, or they both have but not the same
+    print_r($key);
+    krumo($form['field_select_example'][$lang][$key]);
+  }
+}*/
+
   // this map built from explaining one site's form, might not be universal
 }
 
+/*
+* Helper function to add the needed values for displaying the field as a dropdown
+* assuming this textfield has [0][value] like my test case
+* pass by reference so no return value needed
+*/
+function classy_widgets_select_conversion(&$field, $options = NULL) {
+  $field[0]['value']['#multiple'] = FALSE;
+  $field[0]['value']['#delta'] = 0;
+  $field[0]['value']['#columns'] = array(0 => 'value');
+  $field[0]['value']['#value_key'] = 'value';
+  $field[0]['value']['#properties'] = array(
+    'strip_tags'=> TRUE,
+    'optgroups'=> TRUE,
+    'empty_option'=>'option_none',
+    'filter_xss'=> TRUE,
+  );
+  $field[0]['value']['#element_validate'] = array(
+    0 => 'options_field_widget_validate',
+  );
+  $field[0]['value']['#after_build'] = array(
+    0 => 'field_form_element_after_build',
+  );
+  if( $options !== NULL ){
+    if( !isset($options['_none']) ){
+      $options['_none']='- None -';
+    }
+    ksort($options);
+    $field[0]['value']['#options'] = $options;
+  }
+  // field should be converted now
+}
 
 /*
  * helper function, because reassempling value paths from dpm is slightly irksome
