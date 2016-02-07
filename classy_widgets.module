@@ -95,7 +95,7 @@ function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
     return;  // get out of here before it crashes
   }
 
-  if( !$form['#node_edit_form'] ) {
+  if( !isset($form['#node_edit_form']) ) {
     // currently only want this touching Add and Edit forms
     return;
   }
@@ -175,10 +175,14 @@ function classy_widgets_select_conversion(&$field, $options = NULL) {
   );
   if( $options !== NULL ){
     if( !isset($options['_none']) ){
-      $options['_none']='- None -';
+      // want this value first
+      $aOptions = array('_none'=>'- None -');
+      $aOptions += $options;
+      $field[0]['value']['#options'] = $aOptions;
+    } else { 
+      //ksort($options);
+      $field[0]['value']['#options'] = $options;
     }
-    ksort($options);
-    $field[0]['value']['#options'] = $options;
   }
   // field should be converted now
 }
