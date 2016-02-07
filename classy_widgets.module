@@ -24,7 +24,6 @@ function classy_widgets_form_field_ui_field_edit_form_alter(&$form, $form_state)
  * make a space in the serialized field data to store my pieces
  */
 function classy_widgets_field_widget_info_alter(&$info) {
-  
   foreach ($info as $field => $holds) {    
     if (isset($info[$field]['settings'])) {
       // works best when same array keys as fields
@@ -68,6 +67,7 @@ function classy_widgets_field_widget_settings_form($field, $instance) {
       '#title' => t('This field should mimic a list on the form'),      
       '#default_value' => (isset($settings['classy']['psuedo-select']))?$settings['classy']['psuedo-select']:'',
       '#options' => array(
+        '_none' => '- Choose -',
         'radios' => 'Radio buttons',
         'checkboxes' => 'Checkboxes',
         'select' => 'Dropdown select',
@@ -105,9 +105,12 @@ function classy_widgets_form_alter(&$form, &$form_state, $form_id) {
 
 //krumo( $form );
 //$form[instance][default_value_widget][field_classy_test][#language]
-
+// my test site is using 'en' but form is using 'und'
+// the psuedo-select is showing on field_settings form
+ 
   foreach( $form_state['field'] as $field => $has ) {   
-    if( isset( $has[$lang]['field']['settings']['classy'])) {     
+
+    if( isset( $has[$lang]['field']['settings']['classy']['classes'])) { 
       // this field has classy classes to apply 
       $classes = explode(',', check_plain( $has[$lang]['field']['settings']['classy']['classes']) );
       foreach ($classes as $add) {
