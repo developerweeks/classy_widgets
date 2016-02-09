@@ -200,12 +200,12 @@ function classy_widgets_explain($element = array(), $depth = 1, $lead = '', $cap
   }
   if (is_array($element)) {
     foreach ($element as $key => $part) {
-      $string .= ($depth == 1) ? '[' . $key . ']' : explain($part, $depth - 1, $lead . '[' . $key . ']', $cap);
+      $string .= ($depth == 1) ? '[' . $key . ']' : classy_widgets_explain($part, $depth - 1, $lead . '[' . $key . ']', $cap);
     }
   }
   elseif (is_object($element)) {
     foreach ($element as $key => $part) {
-      $string .= ($depth == 1) ? '->' . $key : explain($part, $depth - 1, $lead . '->' . $key, $cap);
+      $string .= ($depth == 1) ? '->' . $key : classy_widgets_explain($part, $depth - 1, $lead . '->' . $key, $cap);
     }
   }
   else {
